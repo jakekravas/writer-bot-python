@@ -1,190 +1,164 @@
 """
     File: writer_bot.py
     Author: Jake Kravas
-    Purpose: 
+    Purpose: display randomly
+    generated text to user based
+    on prefixes and suffixes of
+    user-inputted .txt file, with
+    length of prefix and # of
+    words to print out up to the
+    user
 """
 
-import random
+from random import *
+SEED = 8
+seed(SEED)
+NONWORD = ' '
 
-def get_data():
-    # sfile = input()
-    # n = input() #prefix size
-    # words_to_generate = int(input())
+def get_data_from_file():
+    """
+        gets file input from
+        user and returns words
+        of file, prefix length (n)
+        and display_length
+    """
 
-    sfile = '../bee.txt'
-    n = 2
-    words_to_generate = 50
+    # txt file
+    sfile = input()
 
-    words = [] # words in file
+    # prefix size
+    n = int(input())
+
+    # number of words to print
+    display_length = int(input())
+
+    # words in file
+    words = []
+    # words = ['NONWORD' for i in range(n)]
 
     sfile_data = open(sfile, 'r')
     sfile_lines = sfile_data.readlines()
 
+    # add words from file to words list
     for line in sfile_lines:
-        line = line.strip()
-        line_words = line.split()
-        for word in line_words:
+
+        # remove excess whitespace from line and convert it to a list
+        line = line.strip().split()
+
+        # add each word in line to list
+        for word in line:
             words.append(word)
     
-    prefix_dict = {('NONWORD', 'NONWORD'): [words[0]], ('NONWORD', words[0]): [words[1]]}
+
+    sfile_data.close()
+
+    return words, n, display_length
+
+def create_prefix_dict(words, n):
+    """
+        returns dictionary of prefixes
+        based on words argument
+    """
+
+    if n == 1:
+        prefix_dict = {(NONWORD): [words[0]]}
+
+
+    elif n == 2:
+        prefix_dict = {(NONWORD, NONWORD): [words[0]], (NONWORD, words[0]): [words[1]]}
+
+
+    elif n == 3:
+        prefix_dict = {
+            (NONWORD, NONWORD, NONWORD): [words[0]],
+            (NONWORD, NONWORD, words[0]): [words[1]],
+            (NONWORD, words[0], words[1]): [words[2]]
+        }
+
 
     for i in range(len(words)):
         if i + n < len(words):
 
+            # set prefix to tuple of length n
             prefix = tuple(words[i:i + n])
 
+            # add word after prefix to prefix_dict
             if prefix in prefix_dict:
                 prefix_dict[prefix].append(words[i + n])
             else:
                 prefix_dict[prefix] = [words[i + n]]
     
-    return prefix_dict, n, words_to_generate
+    return prefix_dict
 
 
-def generate_text(prefix_dict, n, words_to_generate):
+def get_words_to_display(words, prefix_dict, n, display_length):
+    """
+        returns list of words to display
+    """
 
-    # prefix_list = prefix_dict.keys()
-    prefix_list = list(prefix_dict)
-    # print(prefix_dict)
-    count = 0
+    # list of words to be printed to user
+    words_to_display = words[:n]
 
-    # words_to_display = [word for word in prefix_list[0]]
-    words_to_display = []
+    # tuple of current prefix
+    cur_prefix_tup = tuple(words_to_display)
 
-    # getting n amount of words into words_to_display to start
-    for p in prefix_list:
-        if len(words_to_display) < n:
-            new_word = prefix_dict[p][0]
-            words_to_display.append(prefix_dict[p][0])
+    while cur_prefix_tup in prefix_dict and len(words_to_display) < display_length:
 
+        # list of suffixes of current prefix
+        cur_suffix_list = prefix_dict[cur_prefix_tup]
 
-    cur_word_list = prefix_dict[tuple(words_to_display[-n:])]
-    cur_prefix_tup = tuple(words_to_display[-n:])
-    
-    while cur_prefix_tup in prefix_dict and len(words_to_display) < words_to_generate:
-        cur_word_list = prefix_dict[cur_prefix_tup]
-        rand_num = random.randint(0, len(cur_word_list)-1)
+        # if cur_suffix_list length is 0, set word_pos to 0
+        # otherwise set word_pos to randomly generated #
+        # from 0 to length of current_suffix_list
+        if len(cur_suffix_list) == 1:
+            word_pos = 0
+        else:
+            word_pos = randint(0, len(cur_suffix_list)-1)
 
-        new_word = cur_word_list[rand_num]
+        # set new_word to 
+        new_word = cur_suffix_list[word_pos]
+
+        # add new_word to words_to_display
         words_to_display.append(new_word)
 
+        # update variable since words_to_display has changed
         cur_prefix_tup = tuple(words_to_display[-n:])
-
-
     
+    return words_to_display
 
 
+def display_words(words_to_display):
+    """
+        prints words in words_to_display
+        with a new line after every
+        ten words
+    """
 
-    # while len(words_to_display) < words_to_generate or not tuple(cur) in prefix_dict:
-    # while len(words_to_display) < words_to_generate and tuple(cur) in prefix_dict:
-    # while len(words_to_display) < words_to_generate:
-        # if len(cur) == 1:
-        # print(tuple(cur) in prefix_dict)
-        # words_to_display.append(cur[0])
-        # cur = prefix_dict[tuple(words_to_display[-n:])]
-    # print(words_to_display)
+    # list of lists that will hold words to display
+    words_to_display_lines = []
 
+    for i in range(len(words_to_display)):
 
+        # append new empty list if i divisible by 10
+        if i % 10 == 0:
+            words_to_display_lines.append([])
 
-
-
-    # print(n)
-    # print(words_to_display)
-    # print(tuple(words_to_display[-n:]))
-
-
-    # for i in range(n):
-    #     words_to_display
-
-    # while len(words_to_display) < n:
-    #     for pref in prefix_dict:
-    #         print(pref)
-    #         words_to_display.append('a')
+        # add word to most recently appended list in words_to_display_lines
+        words_to_display_lines[-1].append(words_to_display[i])
 
 
-    # for pref in prefix_dict:
-    #     # while len(words_to_display) < n:
-    #     #     print(pref)
+    for line in words_to_display_lines:
 
-    #     if len(words_to_display) < 2:
-    #         words_to_display.append(prefix_dict[pref])
+        # convert line to string
+        line = ' '.join(line)
 
-    # print(words_to_display)
-
-    # cur = prefix_dict[prefix_list[0]]
-    # cur = prefix_dict[prefix_list]
-
-    # while count < words_to_generate:
-    #     if words_to_display
-    #     words_to_display.append(cur[0])
-    #     # cur = 
-    #     count += 1
-
-
-    # for m in prefix_dict:
-    #     print(m)
-
-    # print(prefix_dict)
-
-
-    # print(prefix)
-
-    # print(' '.join(prefix))
-    # print(prefix[-1])
-
-    # print(prefix_dict[prefix])
-
-    # while count < words_to_generate:
-    #     for word in prefix:
-    #         words_to_display.append(word)
-        
-        # words_to_display.append(' '.join(prefix))
-
-
-    # for i in range(words_to_generate):
-    #     print(prefix_dict[prefix_list[i]])
-
-    # while count < words_to_generate:
-    #     words_to_display.append(cur)
-
-    #     if len(cur) == 1:
-    #         words_to_display.append(cur[0])
-
-    #     count += 1
-
-
-
-
-    # while count < words_to_generate:
-        # print(words_to_display)
-
-        # words_to_display += 
-
-
-        # if len(prefix) > 1:
-        #     print('AAA')
-        #     for word in prefix:
-        #         words_to_display.append(word)
-        #     if len(prefix_dict[prefix]) == 1:
-        #         prefix = tuple(prefix_dict[prefix][0])
-
-        # count += 1
-
-
-
-
-        # for prefix in prefix_tup:
-        #     print(prefix)
-
-    # for i in range(words_to_generate):
-    #     if i == 0:
-    #         print(' '.join(first_prefix))
-        # print(i)
-
+        print(line)
 
 
 def main():
-    prefix_dict, n, words_to_generate = get_data()
-    generate_text(prefix_dict, n, words_to_generate)
+    words, n, display_length = get_data_from_file()
+    prefix_dict = create_prefix_dict(words, n)
+    words_to_display = get_words_to_display(words, prefix_dict, n, display_length)
+    display_words(words_to_display)
 
 main()
